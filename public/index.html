@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>Chatting</h1>
+
+    <p id="connectionStatus">Connecting...</p>
+    <button id="sendMessageBtn">Send Test Message</button>
+    <ul id="messages"></ul>
+
+    <script>
+        // Establish the Socket.IO connection as soon as the page loads
+        const socket = io(); // This will connect to the server that served this page (http://localhost:9000)
+
+        const connectionStatus = document.getElementById('connectionStatus');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const messagesList = document.getElementById('messages');
+
+        // Listen for connection event
+        socket.on('connect', () => {
+            console.log('Connected to Socket.IO server!');
+            connectionStatus.textContent = 'Status: Connected!';
+        });
+
+        // Listen for disconnection event
+        socket.on('disconnect', () => {
+            console.log('Disconnected from Socket.IO server.');
+            connectionStatus.textContent = 'Status: Disconnected.';
+        });
+
+        // Listen for a custom event from the server
+        socket.on('helloFromServer', (data) => {
+            console.log('Received from server:', data);
+            const li = document.createElement('li');
+            li.textContent = `Server: ${data}`;
+            messagesList.appendChild(li);
+        });
+
+        // Event listener for the button to send a message With Time Stamp
+        sendMessageBtn.addEventListener('click', () => {
+            const testMessage = `Hello from client! (timestamp: ${new Date().toLocaleTimeString()})`;
+            socket.emit('helloFromClient', testMessage); // Emit a custom event
+            const li = document.createElement('li');
+            li.textContent = `Client: ${testMessage}`;
+            messagesList.appendChild(li);
+        });
+
+        // Optional: Error handling for connection
+        socket.on('connect_error', (error) => {
+            console.error('Socket.IO connection error:', error);
+            connectionStatus.textContent = `Status: Connection Error! (${error.message})`;
+        });
+    </script>
+</body>
+</html>
