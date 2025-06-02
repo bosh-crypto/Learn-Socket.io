@@ -12,12 +12,13 @@ const io = new Server(server);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-    console.log('A New User Has Been Connected', socket.id); // Typo corrected: "Connceted" to "Connected"
+    console.log('A New User Has Been Connected', socket.id);
 
-    // Optional: Add a simple event listener to confirm communication
-    socket.on('helloFromClient', (message) => {
-        console.log(`Message from client ${socket.id}: ${message}`);
-        socket.emit('helloFromServer', `Server received your message: "${message}"`);
+    // Listen for 'chat message' event from the client
+    socket.on('chat message', (msg) => {
+        console.log(`Message from client ${socket.id}: ${msg}`);
+        // Broadcast the message to all connected clients
+        io.emit('chat message', msg);
     });
 
     socket.on('disconnect', () => {

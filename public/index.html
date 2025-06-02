@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <style>
+        body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+        #form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }
+        #input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
+        #input:focus { outline: none; }
+        #form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
+
+        #messages { list-style-type: none; margin: 0; padding: 0; }
+        #messages > li { padding: 0.5rem 1rem; }
+        #messages > li:nth-child(odd) { background: #efefef; }
+    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat App</title>
@@ -10,16 +22,20 @@
     <h1>Chatting</h1>
 
     <p id="connectionStatus">Connecting...</p>
-    <button id="sendMessageBtn">Send Test Message</button>
+
     <ul id="messages"></ul>
+    <form id="form" action="">
+        <input id="input" autocomplete="off" /><button>Send</button>
+    </form>
 
     <script>
         // Establish the Socket.IO connection as soon as the page loads
-        const socket = io(); // This will connect to the server that served this page (http://localhost:9000)
+        const socket = io();
 
         const connectionStatus = document.getElementById('connectionStatus');
-        const sendMessageBtn = document.getElementById('sendMessageBtn');
         const messagesList = document.getElementById('messages');
+        const form = document.getElementById('form'); // Get the form element
+        const input = document.getElementById('input'); // Get the input field
 
         // Listen for connection event
         socket.on('connect', () => {
@@ -33,21 +49,23 @@
             connectionStatus.textContent = 'Status: Disconnected.';
         });
 
-        // Listen for a custom event from the server
-        socket.on('helloFromServer', (data) => {
-            console.log('Received from server:', data);
-            const li = document.createElement('li');
-            li.textContent = `Server: ${data}`;
-            messagesList.appendChild(li);
+        // Listen for a custom event from the server to display messages
+        socket.on('chat message', (msg) => {
+            console.log('Received from server:', msg);
+            const item = document.createElement('li');
+            item.textContent = msg;
+            messagesList.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight); // Auto-scroll to the bottom
         });
 
-        // Event listener for the button to send a message With Time Stamp
-        sendMessageBtn.addEventListener('click', () => {
-            const testMessage = `Hello from client! (timestamp: ${new Date().toLocaleTimeString()})`;
-            socket.emit('helloFromClient', testMessage); // Emit a custom event
-            const li = document.createElement('li');
-            li.textContent = `Client: ${testMessage}`;
-            messagesList.appendChild(li);
+        // Event listener for the form submission
+        form.addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevent default form submission (page reload)
+            if (input.value) {
+                // Emit 'chat message' event with the input value
+                socket.emit('chat message', input.value);
+                input.value = ''; // Clear the input field
+            }
         });
 
         // Optional: Error handling for connection
